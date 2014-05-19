@@ -7,14 +7,16 @@ import java.util.regex.Pattern;
 
 public class TrafiklabProxy extends Verticle {
 
-    private Matcher m;
+    private final TrafiklabAddress trafiklabAddress;
+
+    public TrafiklabProxy() {
+        trafiklabAddress = new TrafiklabAddress(new Store());
+    }
 
     public void start() {
         vertx.createHttpServer()
                 .requestHandler(request -> {
-                    m = Pattern.compile(".*/(\\d+)").matcher(request.path());
-                    String siteId = m.matches() ? m.group(1) : "9525";
-                    String s = "/sl/realtid/GetDpsDepartures?key=" + getKey() + "&timeWindow=60&siteId=" + siteId;
+                    String s = trafiklabAddress.getUrl(request.path());
                     vertx.createHttpClient()
                             .setHost("api.trafiklab.se")
                             .setSSL(true)
@@ -39,7 +41,26 @@ public class TrafiklabProxy extends Verticle {
                 .listen(3000);
     }
 
-    private String getKey() {
-        throw new IllegalStateException("get your own key");
+}
+
+class TrafiklabAddress {
+    private final Pattern pattern = Pattern.compile(".*/(\\d+)");
+    private Store store;
+
+    TrafiklabAddress(Store store) {
+        this.store = store;
+    }
+
+    String getUrl(String path) {
+        Matcher m = pattern.matcher(path);
+        String siteId = m.matches() ? m.group(1) : "9525";
+        return "/sl/realtid/GetDpsDepartures?key=" + store.getKey() + "&timeWindow=60&siteId=" + siteId;
+    }
+}
+
+class Store {
+    String getKey() {
+        return "8589732b19f6c9a78b004aff74f28d98";
+//        throw new IllegalStateException("get your own key");
     }
 }
