@@ -16,27 +16,31 @@ public class TrafiklabProxy extends Verticle {
     public void start() {
         vertx.createHttpServer()
                 .requestHandler(request -> {
-                    String s = trafiklabAddress.getUrl(request.path());
-                    vertx.createHttpClient()
-                            .setHost("api.trafiklab.se")
-                            .setSSL(true)
-                            .setPort(443)
-                            .get(s, rsp -> rsp.bodyHandler(trafiklabData -> {
-                                Buffer buffer = new Buffer(
-                                        new JsonObject(trafiklabData.toString())
-                                                .getObject("DPS")
-                                                .getObject("Trains")
-                                                .getArray("DpsTrain")
-                                                .encode()
-                                );
+                    try {
+                        String s = trafiklabAddress.getUrl(request.path());
+                        vertx.createHttpClient()
+                                .setHost("api.trafiklab.se")
+                                .setSSL(true)
+                                .setPort(443)
+                                .get(s, rsp -> rsp.bodyHandler(trafiklabData -> {
+                                    Buffer buffer = new Buffer(
+                                            new JsonObject(trafiklabData.toString())
+                                                    .getObject("DPS")
+                                                    .getObject("Trains")
+                                                    .getArray("DpsTrain")
+                                                    .encode()
+                                    );
 
-                                request.response()
-                                        .putHeader("Content-Length", Integer.toString(buffer.length()))
-                                        .putHeader("Content-Type", "application/json")
-                                        .write(buffer);
-                            }))
-                            .putHeader("Accept", "application/json")
-                            .end();
+                                    request.response()
+                                            .putHeader("Content-Length", Integer.toString(buffer.length()))
+                                            .putHeader("Content-Type", "application/json")
+                                            .write(buffer);
+                                }))
+                                .putHeader("Accept", "application/json")
+                                .end();
+                    } catch (IllegalStateException e) {
+                        request.response().setStatusCode(401).end();
+                    }
                 })
                 .listen(3000);
     }
