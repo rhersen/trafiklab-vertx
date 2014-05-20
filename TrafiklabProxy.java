@@ -60,7 +60,6 @@ class TrafiklabAddress {
 
 class Store {
     String getKey() {
-        return "8589732b19f6c9a78b004aff74f28d98";
-//        throw new IllegalStateException("get your own key");
+        throw new IllegalStateException("get your own key");
     }
 }
