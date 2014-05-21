@@ -1,4 +1,6 @@
+import org.vertx.java.core.VoidHandler;
 import org.vertx.java.core.buffer.Buffer;
+import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.platform.Verticle;
 
@@ -8,43 +10,60 @@ import java.util.regex.Pattern;
 public class TrafiklabProxy extends Verticle {
 
     private final TrafiklabAddress trafiklabAddress;
+    private final Store store;
 
     public TrafiklabProxy() {
-        trafiklabAddress = new TrafiklabAddress(new Store());
+        store = new Store();
+        trafiklabAddress = new TrafiklabAddress(store);
     }
 
     public void start() {
         vertx.createHttpServer()
                 .requestHandler(request -> {
-                    try {
-                        String s = trafiklabAddress.getUrl(request.path());
-                        vertx.createHttpClient()
-                                .setHost("api.trafiklab.se")
-                                .setSSL(true)
-                                .setPort(443)
-                                .get(s, rsp -> rsp.bodyHandler(trafiklabData -> {
-                                    Buffer buffer = new Buffer(
-                                            new JsonObject(trafiklabData.toString())
-                                                    .getObject("DPS")
-                                                    .getObject("Trains")
-                                                    .getArray("DpsTrain")
-                                                    .encode()
-                                    );
-
-                                    request.response()
-                                            .putHeader("Content-Length", Integer.toString(buffer.length()))
-                                            .putHeader("Content-Type", "application/json")
-                                            .write(buffer);
-                                }))
-                                .putHeader("Accept", "application/json")
-                                .end();
-                    } catch (IllegalStateException e) {
-                        request.response().setStatusCode(401).end();
-                    }
+                    if (request.path().startsWith("/key")) {
+                        handlePost(request);
+                    } else
+                        try {
+                            handleGetDeparture(request);
+                        } catch (IllegalStateException e) {
+                            request.response().setStatusCode(401).end();
+                        }
                 })
                 .listen(3000);
     }
 
+    private void handleGetDeparture(HttpServerRequest request) {
+        vertx.createHttpClient()
+                .setHost("api.trafiklab.se")
+                .setSSL(true)
+                .setPort(443)
+                .get(trafiklabAddress.getUrl(request.path()), rsp -> rsp.bodyHandler(trafiklabData -> {
+                    Buffer buffer = new Buffer(
+                            new JsonObject(trafiklabData.toString())
+                                    .getObject("DPS")
+                                    .getObject("Trains")
+                                    .getArray("DpsTrain")
+                                    .encode()
+                    );
+
+                    request.response()
+                            .putHeader("Content-Length", Integer.toString(buffer.length()))
+                            .putHeader("Content-Type", "application/json")
+                            .write(buffer);
+                }))
+                .putHeader("Accept", "application/json")
+                .end();
+    }
+
+    private void handlePost(final HttpServerRequest request) {
+        request
+                .expectMultiPart(true)
+                .endHandler(new VoidHandler() {
+                    protected void handle() {
+                        store.setKey(request.formAttributes().get("key"));
+                    }
+                });
+    }
 }
 
 class TrafiklabAddress {
@@ -63,7 +82,16 @@ class TrafiklabAddress {
 }
 
 class Store {
+    private String key;
+
     String getKey() {
-        throw new IllegalStateException("get your own key");
+        if (key == null) {
+            throw new IllegalStateException("get your own key");
+        }
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
     }
 }
