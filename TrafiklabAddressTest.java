@@ -11,12 +11,12 @@ public class TrafiklabAddressTest {
     public void setUp() throws Exception {
         Store store = new Store();
         store.setKey("nyckel");
-        subject = new TrafiklabAddress(store);
+        subject = new TrafiklabAddress();
     }
 
     @Test
     public void shouldCreateUrlBasedOnSiteIdInRequestPath() throws Exception {
-        String result = subject.getUrl("/departures/1111");
+        String result = subject.getUrl("/departures/1111", "nyckel");
         assertTrue(result.matches(".+\\?key=nyckel&timeWindow=60&siteId=1111$"));
     }
 }
