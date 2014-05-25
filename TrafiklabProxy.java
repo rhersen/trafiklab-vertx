@@ -1,11 +1,14 @@
 import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.eventbus.Message;
 import org.vertx.java.core.http.HttpServerRequest;
+import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.platform.Verticle;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static java.util.Arrays.asList;
 
 public class TrafiklabProxy extends Verticle {
 
@@ -16,6 +19,8 @@ public class TrafiklabProxy extends Verticle {
                 .requestHandler(request -> {
                     if (request.path().startsWith("/key")) {
                         handlePost(request);
+                    } else if (request.path().startsWith("/stations")) {
+                        handleGetStations(request);
                     } else {
                         vertx.eventBus().send("store", "", (Message<String> m) -> {
                             String key = m.body();
@@ -28,6 +33,17 @@ public class TrafiklabProxy extends Verticle {
                     }
                 })
                 .listen(3000);
+    }
+
+    private void handleGetStations(HttpServerRequest request) {
+        Buffer buffer = new Buffer(
+                new JsonArray(asList(9507, 9508, 9509, 9510, 9000, 9530, 9531, 9529, 9528, 9527, 9526, 9525, 9524, 9523, 9522, 9521, 9520)).encode()
+        );
+
+        request.response()
+                .putHeader("Content-Length", Integer.toString(buffer.length()))
+                .putHeader("Content-Type", "application/json")
+                .write(buffer);
     }
 
     private void handleGetDeparture(HttpServerRequest request, String key) {
