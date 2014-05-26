@@ -1,7 +1,8 @@
 import org.junit.Before;
 import org.junit.Test;
+import org.vertx.java.core.json.JsonArray;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertEquals;
 
 public class TrafiklabProxyTest {
 
@@ -13,7 +14,10 @@ public class TrafiklabProxyTest {
     }
 
     @Test
-    public void testStart() throws Exception {
-        assertNotNull(target);
+    public void getStationsReturnsIntegers() throws Exception {
+        JsonArray result = target.getStations();
+        for (Object station : result) {
+            assertEquals(Integer.class, station.getClass());
+        }
     }
 }

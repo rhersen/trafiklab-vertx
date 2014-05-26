@@ -37,13 +37,17 @@ public class TrafiklabProxy extends Verticle {
 
     private void handleGetStations(HttpServerRequest request) {
         Buffer buffer = new Buffer(
-                new JsonArray(asList(9507, 9508, 9509, 9510, 9000, 9530, 9531, 9529, 9528, 9527, 9526, 9525, 9524, 9523, 9522, 9521, 9520)).encode()
+                getStations().encode()
         );
 
         request.response()
                 .putHeader("Content-Length", Integer.toString(buffer.length()))
                 .putHeader("Content-Type", "application/json")
                 .write(buffer);
+    }
+
+    JsonArray getStations() {
+        return new JsonArray(asList(9507, 9508, 9509, 9510, 9000, 9530, 9531, 9529, 9528, 9527, 9526, 9525, 9524, 9523, 9522, 9521, 9520));
     }
 
     private void handleGetDeparture(HttpServerRequest request, String key) {
