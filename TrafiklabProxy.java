@@ -5,10 +5,10 @@ import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.platform.Verticle;
 
+import java.util.LinkedHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static java.util.Arrays.asList;
+import java.util.stream.IntStream;
 
 public class TrafiklabProxy extends Verticle {
 
@@ -47,7 +47,17 @@ public class TrafiklabProxy extends Verticle {
     }
 
     JsonArray getStations() {
-        return new JsonArray(asList(9507, 9508, 9509, 9510, 9000, 9530, 9531, 9529, 9528, 9527, 9526, 9525, 9524, 9523, 9522, 9521, 9520));
+        return new JsonArray(
+                IntStream.of(9507, 9508, 9509, 9510, 9000,
+                        9530, 9531, 9529, 9528, 9527, 9526, 9525, 9524, 9523, 9522, 9521, 9520)
+                        .mapToObj(this::wrapInObject)
+                        .toArray());
+    }
+
+    private LinkedHashMap<String, Object> wrapInObject(final Integer siteId) {
+        return new LinkedHashMap<String, Object>() {{
+            put("SiteId", siteId);
+        }};
     }
 
     private void handleGetDeparture(HttpServerRequest request, String key) {
