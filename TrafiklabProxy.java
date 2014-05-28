@@ -22,14 +22,12 @@ public class TrafiklabProxy extends Verticle {
                     } else if (request.path().startsWith("/stations")) {
                         handleGetStations(request);
                     } else {
-                        vertx.eventBus().send("store", "", (Message<String> m) -> {
-                            String key = m.body();
-                            if (key.isEmpty()) {
-                                request.response().setStatusCode(401).end();
-                            } else {
-                                handleGetDeparture(request, key);
-                            }
-                        });
+                        String key = container.config().getString("trafiklab");
+                        if (key == null) {
+                            request.response().setStatusCode(401).end();
+                        } else {
+                            handleGetDeparture(request, key);
+                        }
                     }
                 })
                 .listen(3000);
