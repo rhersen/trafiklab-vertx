@@ -9,8 +9,6 @@ public class TrafiklabAddressTest {
 
     @Before
     public void setUp() throws Exception {
-        Store store = new Store();
-        store.put("nyckel");
         subject = new TrafiklabAddress();
     }
 
