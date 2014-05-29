@@ -9,19 +9,19 @@ public class Store extends Verticle implements Handler<Message<String>> {
         vertx.eventBus().registerHandler("store", this);
     }
 
-    String getKey() {
+    String get() {
         return key;
     }
 
-    public void setKey(String key) {
+    public void put(String key) {
         this.key = key;
     }
 
     public void handle(Message<String> message) {
         String body = message.body();
         if (!body.isEmpty()) {
-            setKey(body);
+            put(body);
         }
-        message.reply(getKey());
+        message.reply(get());
     }
 }

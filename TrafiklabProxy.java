@@ -46,8 +46,7 @@ public class TrafiklabProxy extends Verticle {
 
     JsonArray getStations() {
         return new JsonArray(
-                IntStream.of(9507, 9508, 9509, 9510, 9000,
-                        9530, 9531, 9529, 9528, 9527, 9526, 9525, 9524, 9523, 9522, 9521, 9520)
+                IntStream.of(9531, 9529, 9528, 9527, 9526, 9525, 9524, 9523, 9522, 9521, 9520)
                         .mapToObj(this::wrapInObject)
                         .toArray());
     }
@@ -55,6 +54,9 @@ public class TrafiklabProxy extends Verticle {
     private LinkedHashMap<String, Object> wrapInObject(final Integer siteId) {
         return new LinkedHashMap<String, Object>() {{
             put("SiteId", siteId);
+            if (siteId == 9525) {
+                put("StopAreaName", "Tullinge");
+            }
         }};
     }
 
@@ -64,13 +66,15 @@ public class TrafiklabProxy extends Verticle {
                 .setSSL(true)
                 .setPort(443)
                 .get(trafiklabAddress.getUrl(request.path(), key), rsp -> rsp.bodyHandler(trafiklabData -> {
-                    Buffer buffer = new Buffer(
-                            new JsonObject(trafiklabData.toString())
-                                    .getObject("DPS")
-                                    .getObject("Trains")
-                                    .getArray("DpsTrain")
-                                    .encode()
-                    );
+                    JsonArray array = new JsonObject(trafiklabData.toString())
+                            .getObject("DPS")
+                            .getObject("Trains")
+                            .getArray("DpsTrain");
+                    if (array == null) {
+                        array = new JsonArray();
+                    }
+                    String encode = array.encode();
+                    Buffer buffer = new Buffer(encode);
 
                     request.response()
                             .putHeader("Content-Length", Integer.toString(buffer.length()))
